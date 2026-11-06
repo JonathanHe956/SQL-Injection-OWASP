@@ -1,4 +1,4 @@
-﻿# SQL-Injection-OWASP
+# SQL-Injection-Equipo4
 
 Laboratorio educativo para demostrar una vulnerabilidad de **inyección SQL** (OWASP Top 10 – A03: Injection) en un formulario de inicio de sesión hecho con PHP y SQLite, y cómo corregirla con **consultas preparadas**.
 
@@ -33,8 +33,8 @@ Debe aparecer `pdo_sqlite` en la lista.
 ## Instalación
 
 ```bash
-git clone https://github.com/JonathanHe956/SQL-Injection-OWASP.git
-cd SQL-Injection-OWASP
+git clone https://github.com/JonathanHe956/SQL-Injection-Equipo4.git
+cd SQL-Injection-Equipo4
 ```
 
 ## Ejecución
@@ -59,9 +59,9 @@ Para detener el servidor presiona `Ctrl + C`.
 
 ### Opción 2: XAMPP (Apache)
 
-1. Copia la carpeta del proyecto dentro de `C:\xampp\htdocs\` (por ejemplo `C:\xampp\htdocs\SQL-Injection-OWASP`).
+1. Copia la carpeta del proyecto dentro de `C:\xampp\htdocs\` (por ejemplo `C:\xampp\htdocs\SQL-Injection-Equipo4`).
 2. Abre el **XAMPP Control Panel** e inicia **Apache**.
-3. Abre en el navegador: <http://localhost/SQL-Injection-OWASP/>
+3. Abre en el navegador: <http://localhost/SQL-Injection-Equipo4/>
 
 ## Base de datos
 
