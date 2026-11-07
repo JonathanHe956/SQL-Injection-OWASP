@@ -9,12 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $sql = "SELECT * FROM usuarios WHERE usuario = '$usuario' AND password = '$password'";
   $fila = $db->query($sql)->fetch();
 
-  // ===== VERSIÓN SEGURA (activa) =====
-  //$sql  = "SELECT * FROM usuarios WHERE usuario = ? AND password = ?";
-  //$stmt = $db->prepare($sql);
-  //$stmt->execute([$usuario, $password]);
-  //$fila = $stmt->fetch();
 
+  
   $ok = (bool)$fila;
   $mensaje = $ok ? 'Acceso concedido' : 'Datos incorrectos';
 }
