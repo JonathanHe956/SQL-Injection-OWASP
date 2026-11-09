@@ -1,18 +1,30 @@
 <?php require 'db.php';
 $mensaje = null;
 $ok = false;
+$resultados = [];
+$inyeccionVisible = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $usuario  = $_POST['usuario'];
-  $password = $_POST['password'];
+  $usuario  = is_string($_POST['usuario'] ?? null) ? $_POST['usuario'] : '';
+  $password = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
 
   // ===== VERSIÓN VULNERABLE (quita los // para activar) =====
-  $sql = "SELECT * FROM usuarios WHERE usuario = '$usuario' AND password = '$password'";
-  $fila = $db->query($sql)->fetch();
+  $sql = "SELECT usuario, password FROM usuarios WHERE usuario = '$usuario' AND password = '$password'";
+  try {
+    $filas = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+  } catch (PDOException $error) {
+    error_log('Error en la consulta del login: ' . $error->getMessage());
+    $filas = [];
+  }
+  $fila = $filas[0] ?? false;
 
-
-  
   $ok = (bool)$fila;
   $mensaje = $ok ? 'Acceso concedido' : 'Datos incorrectos';
+
+  $esLocal = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
+  if ($esLocal && stripos($usuario, 'union') !== false) {
+    $inyeccionVisible = $usuario;
+    $resultados = $filas;
+  }
 }
 ?>
 <!DOCTYPE html>
@@ -106,6 +118,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
   .alert.ok{background:rgba(31,138,76,.18);border:1px solid var(--ok);color:#8ef0b4}
   .alert.err{background:rgba(180,50,74,.18);border:1px solid var(--err);color:#ff9fb0}
+  .results{margin-top:18px;padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:rgba(0,0,0,.25);font:13px/1.6 Consolas,monospace;overflow-wrap:anywhere}
+  .result-query{display:block;color:#ff9fb0;margin-bottom:6px}
+  .results-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px}
+  .result{margin:0;padding:7px 9px;border-radius:6px;background:rgba(255,255,255,.04)}
+  .card.has-results{max-width:760px;padding:24px}
+  .card.has-results .logo{width:88px;height:88px;margin-bottom:12px}
+  .card.has-results .field{margin-bottom:12px}
+  .card.has-results input{padding:10px 12px}
+  .card.has-results button{padding:11px;margin-top:0}
+  .card.has-results .link{margin-top:10px}
+  @media(max-width:600px){.results-list{grid-template-columns:1fr}}
 
   /* ===== Barra superior ===== */
   .topbar{
@@ -207,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <div class="aviso"> Página de prueba — NO es un sitio oficial. Entorno de laboratorio.</div>
 
-  <form class="card" method="POST">
+  <form class="card<?= count($resultados) > 0 ? ' has-results' : '' ?>" method="POST">
     <span class="dots tr"></span>
     <span class="dots bl"></span>
     <div class="logo"><img src="logo.png" alt="Logo" onerror="this.replaceWith(document.createTextNode('SQL_I'))"></div>
@@ -216,13 +239,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="alert <?= $ok ? 'ok' : 'err' ?>"><?= htmlspecialchars($mensaje) ?></div>
     <?php endif; ?>
 
+    <?php if ($inyeccionVisible !== null && count($resultados) > 0): ?>
+      <div class="results">
+        <div class="results-list">
+          <?php foreach ($resultados as $resultado): ?>
+            <p class="result">
+            <span class="result-query"><?= htmlspecialchars($inyeccionVisible, ENT_QUOTES, 'UTF-8') ?></span>
+            Usuario: <?= htmlspecialchars((string)$resultado['usuario'], ENT_QUOTES, 'UTF-8') ?><br>
+            Contraseña: <?= htmlspecialchars((string)$resultado['password'], ENT_QUOTES, 'UTF-8') ?></p>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <div class="field">
-      <label for="usuario"></label>
+      <label for="usuario">Usuario</label>
       <input id="usuario" name="usuario" placeholder="Usuario" autocomplete="off">
     </div>
 
     <div class="field">
-      <label for="password"></label>
+      <label for="password">Contraseña</label>
       <input id="password" name="password" type="password" placeholder="Contraseña">
     </div>
 
