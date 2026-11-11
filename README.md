@@ -4,7 +4,7 @@
 
 **Vulnerabilidad:** Injection — SQL Injection (OWASP A03:2021 – Injection)
 
-**Tecnologías:** PHP 8, PDO, SQLite, HTML5, CSS3, JavaScript, Google Fonts (Poppins), XAMPP / Apache, sqlmap, Python 3, Git, Visual Studio Code, Terminal / PowerShell.
+**Tecnologías:** PHP 8, PDO, SQLite, HTML5, CSS3, sqlmap, Python 3, Terminal / PowerShell.
 
 > ⚠️ **Aviso:** este proyecto es una página de prueba para fines educativos. No es un sitio oficial y no debe publicarse en un servidor accesible desde internet.
 
