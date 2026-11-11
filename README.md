@@ -6,8 +6,6 @@
 
 **Tecnologías:** PHP 8, PDO, SQLite, HTML5, CSS3, sqlmap, Python 3, Terminal / PowerShell.
 
-> ⚠️ **Aviso:** este proyecto es una página de prueba para fines educativos. No es un sitio oficial y no debe publicarse en un servidor accesible desde internet.
-
 ## Objetivo
 
 Identificar y demostrar una vulnerabilidad de **inyección SQL** en un formulario de inicio de sesión provocada por la concatenación directa de datos del usuario dentro de la consulta, ejecutar pruebas de concepto manuales (`admin' --`, `' OR 1=1 --`, `UNION SELECT`) y automatizadas (**sqlmap**), y documentar el impacto. La corrección mediante **consultas preparadas** se desarrolla y explica en clase.
@@ -178,7 +176,7 @@ La condición `1=1` siempre es verdadera y `--` comenta el resto de la consulta,
 En el campo **Usuario**, ingresa una carga que una otra consulta. La consulta original devuelve dos columnas (`usuario` y `password`), por lo que el `UNION SELECT` debe devolver dos columnas:
 
 ```
-' UNION SELECT usuario, password FROM usuarios --
+' UNION SELECT usuario, password FROM usuarios-- -
 ```
 
 **Resultado esperado:** si la prueba se ejecuta desde localhost, se listan las cuentas de la tabla; cada resultado muestra encima el texto `UNION` ingresado y debajo los campos Usuario y Contraseña.
@@ -234,7 +232,7 @@ Las evidencias se documentan en formato **antes y después**: primero el ataque 
 - **Formulario de login:** captura de la pantalla de inicio de sesión.
 - **Bypass con `admin' --`:** campo Usuario con `admin' --` y el resultado "Acceso concedido".
 - **Bypass con `' OR 1=1 --`:** campo Usuario con `' OR 1=1 --` y el resultado "Acceso concedido".
-- **UNION SELECT (entrada):** campo Usuario con `' UNION SELECT usuario, password FROM usuarios --`.
+- **UNION SELECT (entrada):** campo Usuario con `' UNION SELECT usuario, password FROM usuarios-- -`.
 - **UNION SELECT (resultado):** listado de cuentas (usuarios y contraseñas) mostrado por la inyección.
 - **sqlmap — comando 1 (detectar):** captura de `sqlmap ... -p usuario --batch` marcando el parámetro como inyectable.
 - **sqlmap — comando 2 (motor):** captura de `sqlmap ... --dbms=sqlite --batch` confirmando SQLite.
